@@ -58,8 +58,10 @@
                      v-html="renderMultiBlanks(parseFillBlankTitle(row.title).content)">
                 </div>
                 <!-- 单空填空题 -->
-                <div v-else>
-                  {{ parseFillBlankTitle(row.title).prefix }}<span class="blank-line">_</span>{{ parseFillBlankTitle(row.title).suffix }}
+                <div v-else class="single-blank-line">
+                  <span class="fill-blank-prefix">{{ parseFillBlankTitle(row.title).prefix }}</span>
+                  <span class="blank-line">_</span>
+                  <span class="fill-blank-suffix">{{ parseFillBlankTitle(row.title).suffix }}</span>
                 </div>
                 
                 <div v-if="row.imageUrl" class="question-image">
@@ -834,13 +836,14 @@ onMounted(async () => {
   display: inline-block;
   min-width: 80px;
   max-width: 80px;
-  height: 20px;
+  height: 1px;
   border-bottom: 1px solid #000;
   margin: 0 5px;
   position: relative;
   top: -4px;
   line-height: 5px;
   color: transparent;
+  flex-shrink: 0;
 }
 
 .multi-blank-content {
@@ -851,5 +854,22 @@ onMounted(async () => {
   min-width: 60px;
   display: inline-block;
   vertical-align: middle;
+}
+
+.single-blank-line {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+}
+
+.fill-blank-prefix {
+  margin-right: 5px;
+  white-space: nowrap;
+}
+
+.fill-blank-suffix {
+  margin-left: 5px;
+  white-space: nowrap;
 }
 </style>

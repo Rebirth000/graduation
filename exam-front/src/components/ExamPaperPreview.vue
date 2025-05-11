@@ -116,10 +116,10 @@ const renderQuestionTitle = (question) => {
       // 检查是否为多空填空题
       if (title.type === 'multi-blanks' && title.content) {
         // 多空填空题 - 替换[blank]为横线，使用内联样式确保一致
-        return renderLatex(title.content.replace(/\[blank\]/g, '<span style="display: inline-block; min-width: 80px; height: 20px; border-bottom: 1px solid #000; margin: 0 5px; position: relative; top: -4px; line-height: 5px; color: transparent;">_</span>'))
+        return renderLatex(title.content.replace(/\[blank\]/g, '<span style="display: inline-block; min-width: 80px; height: 1px; border-bottom: 1px solid #000; margin: 0 5px; position: relative; top: -4px; line-height: 5px; color: transparent;">_</span>'))
       } else {
         // 单空填空题
-        return renderLatex((title.prefix || '') + '<span class="blank-line">_</span>' + (title.suffix || ''))
+        return `<span class="fill-blank-wrapper"><span>${renderLatex(title.prefix || '')}</span><span class="blank-line">_</span><span>${renderLatex(title.suffix || '')}</span></span>`
       }
     } catch (e) {
       console.error('解析填空题失败:', e)
@@ -304,5 +304,27 @@ const parseOptions = (options) => {
 /* 移除旧的下划线样式 */
 :deep(._____) {
   display: none;
+}
+
+/* 填空题样式 */
+.fill-blank-wrapper {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+:deep(.blank-line) {
+  display: inline-block;
+  min-width: 80px;
+  max-width: 80px;
+  height: 1px;
+  border-bottom: 1px solid #000;
+  margin: 0 5px;
+  position: relative;
+  top: -4px;
+  line-height: 5px;
+  color: transparent;
+  flex-shrink: 0;
 }
 </style> 
