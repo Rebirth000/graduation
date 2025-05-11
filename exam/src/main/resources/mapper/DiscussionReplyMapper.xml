@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.DiscussionReplyMapper">
+    <resultMap id="replyMap" type="com.management.exam.entity.DiscussionReply">
+        <id property="id" column="id"/>
+        <result property="discussionId" column="discussion_id"/>
+        <result property="content" column="content"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="creatorRole" column="creator_role"/>
+        <result property="creatorName" column="creator_name"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectByDiscussionId" resultMap="replyMap">
+        SELECT r.*,
+        CASE 
+            WHEN r.creator_role = 'STUDENT' THEN s.name
+            WHEN r.creator_role = 'ADMIN' THEN u.username
+        END as creator_name
+        FROM discussion_replies r
+        LEFT JOIN students s ON r.creator_role = 'STUDENT' AND r.created_by = s.id
+        LEFT JOIN users u ON r.creator_role = 'ADMIN' AND r.created_by = u.id
+        WHERE r.discussion_id = #{discussionId}
+        ORDER BY r.created_at ASC
+    </select>
+
+    <insert id="insert" parameterType="com.management.exam.entity.DiscussionReply" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO discussion_replies (discussion_id, content, created_by, creator_role, created_at, updated_at)
+        VALUES (#{discussionId}, #{content}, #{createdBy}, #{creatorRole}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.management.exam.entity.DiscussionReply">
+        UPDATE discussion_replies
+        SET content = #{content},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM discussion_replies WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="replyMap">
+        SELECT r.*,
+        CASE 
+            WHEN r.creator_role = 'STUDENT' THEN s.name
+            WHEN r.creator_role = 'ADMIN' THEN u.username
+        END as creator_name
+        FROM discussion_replies r
+        LEFT JOIN students s ON r.creator_role = 'STUDENT' AND r.created_by = s.id
+        LEFT JOIN users u ON r.creator_role = 'ADMIN' AND r.created_by = u.id
+        WHERE r.id = #{id}
+    </select>
+</mapper> 

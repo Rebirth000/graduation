@@ -1,0 +1,141 @@
+/* 重置所有元素的盒模型 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 重置基本元素 */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* HTML5 显示角色重置为块级元素 */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+/* 设置基本行高 */
+body {
+  line-height: 1;
+}
+
+/* 移除列表样式 */
+ol, ul {
+  list-style: none;
+}
+
+/* 重置引用和代码块样式 */
+blockquote, q {
+  quotes: none;
+}
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+
+/* 重置表格边框间距 */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* 确保表单元素使用正确的字体 */
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: 100%;
+}
+
+/* 移除链接的默认下划线 */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 设置图片为块级元素并最大宽度100% */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 设置基本字体样式 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 设置代码字体 */
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+input {
+  outline: none;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.pagination-container {
+  margin-top: 15px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action-container {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+:root {
+  --el-color-primary: #1890ff;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+.el-button--primary {
+  --el-button-hover-bg-color: #40a9ff;
+  --el-button-active-bg-color: #096dd9;
+}
+
+.el-tag--danger {
+  --el-tag-bg-color: #fff1f0;
+  --el-tag-border-color: #ffa39e;
+  --el-tag-text-color: #cf1322;
+}
+
+.el-tag--success {
+  --el-tag-bg-color: #f6ffed;
+  --el-tag-border-color: #b7eb8f;
+  --el-tag-text-color: #52c41a;
+}

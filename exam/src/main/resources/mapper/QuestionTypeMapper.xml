@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.QuestionTypeMapper">
+    
+    <select id="findAll" resultType="com.management.exam.entity.QuestionType">
+        SELECT 
+            id,
+            name,
+            description,
+            enabled,
+            is_system_default,
+            created_at,
+            updated_at
+        FROM question_type
+        ORDER BY id ASC
+    </select>
+
+    <select id="findByNameWithPage" resultType="com.management.exam.entity.QuestionType">
+        SELECT 
+            id,
+            name,
+            description,
+            enabled,
+            code,
+            is_system_default,
+            created_at,
+            updated_at
+        FROM question_type
+        <where>
+            <if test="name != null and name != ''">
+                name LIKE CONCAT('%', #{name}, '%')
+            </if>
+        </where>
+        ORDER BY id ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByName" resultType="long">
+        SELECT COUNT(*) FROM question_type
+        <where>
+            <if test="name != null and name != ''">
+                name LIKE CONCAT('%', #{name}, '%')
+            </if>
+        </where>
+    </select>
+
+    <select id="findById" resultType="com.management.exam.entity.QuestionType">
+        SELECT
+            id,
+            name,
+            description,
+            enabled,
+            code,
+            is_system_default,
+            created_at,
+            updated_at
+        FROM question_type
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.management.exam.entity.QuestionType" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO question_type (
+            name,
+            description,
+            enabled,
+            is_system_default,
+            code,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{name},
+            #{description},
+            #{enabled},
+            #{isSystemDefault},
+                  #{code},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.management.exam.entity.QuestionType">
+        UPDATE question_type
+        SET 
+            name = #{name},
+            description = #{description},
+            enabled = #{enabled},
+            is_system_default = #{isSystemDefault},
+            code = #{code},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateenabled">
+        UPDATE question_type
+        SET 
+            enabled = #{enabled},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateDefault">
+        UPDATE question_type
+        SET 
+            is_system_default = #{isSystemDefault},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="resetAllDefault">
+        UPDATE question_type
+        SET 
+            is_system_default = 0,
+            updated_at = NOW()
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM question_type WHERE id = #{id}
+    </delete>
+
+</mapper> 

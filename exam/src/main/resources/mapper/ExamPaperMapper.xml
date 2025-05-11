@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.ExamPaperMapper">
+    <resultMap id="examPaperMap" type="com.management.exam.entity.ExamPaper">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="courseId" column="course_id"/>
+        <result property="courseName" column="course_name"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByPage" resultMap="examPaperMap">
+        SELECT ep.*, c.name as course_name 
+        FROM exam_paper ep
+        LEFT JOIN course c ON ep.course_id = c.id
+        ORDER BY ep.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM exam_paper
+    </select>
+
+    <select id="findAll" resultMap="examPaperMap">
+        SELECT ep.*, c.name as course_name 
+        FROM exam_paper ep
+        LEFT JOIN course c ON ep.course_id = c.id
+        ORDER BY ep.created_at DESC
+    </select>
+
+    <select id="findById" resultMap="examPaperMap">
+        SELECT ep.*, c.name as course_name 
+        FROM exam_paper ep
+        LEFT JOIN course c ON ep.course_id = c.id
+        WHERE ep.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exam_paper (title, description, course_id, created_at, updated_at)
+        VALUES (#{title}, #{description}, #{courseId}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="update">
+        UPDATE exam_paper
+        SET title = #{title},
+            description = #{description},
+            course_id = #{courseId},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM exam_paper WHERE id = #{id}
+    </delete>
+
+    <select id="findByCourseId" resultMap="examPaperMap">
+        SELECT ep.*, c.name as course_name 
+        FROM exam_paper ep
+        LEFT JOIN course c ON ep.course_id = c.id
+        WHERE ep.course_id = #{courseId}
+        ORDER BY ep.created_at DESC
+    </select>
+</mapper> 

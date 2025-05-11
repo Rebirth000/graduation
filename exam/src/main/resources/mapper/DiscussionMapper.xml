@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.DiscussionMapper">
+    <resultMap id="discussionMap" type="com.management.exam.entity.Discussion">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="deadline" column="deadline"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="creatorRole" column="creator_role"/>
+        <result property="creatorName" column="creator_name"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectList" resultMap="discussionMap">
+        SELECT d.*,
+        CASE 
+            WHEN d.creator_role = 'STUDENT' THEN s.name
+            WHEN d.creator_role = 'ADMIN' THEN u.username
+        END as creator_name
+        FROM discussions d
+        LEFT JOIN students s ON d.creator_role = 'STUDENT' AND d.created_by = s.id
+        LEFT JOIN users u ON d.creator_role = 'ADMIN' AND d.created_by = u.id
+        <where>
+            <if test="title != null and title != ''">
+                AND d.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+        </where>
+        ORDER BY d.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*)
+        FROM discussions
+        <where>
+            <if test="title != null and title != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="com.management.exam.entity.Discussion" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO discussions (title, content, deadline, created_by, creator_role, created_at, updated_at)
+        VALUES (#{title}, #{content}, #{deadline}, #{createdBy}, #{creatorRole}, NOW(), NOW())
+    </insert>
+
+    <update id="update" parameterType="com.management.exam.entity.Discussion">
+        UPDATE discussions
+        SET title = #{title},
+            content = #{content},
+            deadline = #{deadline},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM discussions WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultMap="discussionMap">
+        SELECT d.*,
+        CASE 
+            WHEN d.creator_role = 'STUDENT' THEN s.name
+            WHEN d.creator_role = 'ADMIN' THEN u.username
+        END as creator_name
+        FROM discussions d
+        LEFT JOIN students s ON d.creator_role = 'STUDENT' AND d.created_by = s.id
+        LEFT JOIN users u ON d.creator_role = 'ADMIN' AND d.created_by = u.id
+        WHERE d.id = #{id}
+    </select>
+</mapper> 

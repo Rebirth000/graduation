@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.ExamMapper">
+    <resultMap id="examMap" type="com.management.exam.entity.Exam">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="courseId" column="course_id"/>
+        <result property="courseName" column="course_name"/>
+        <result property="paperId" column="paper_id"/>
+        <result property="paperName" column="paper_name"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="registrationStatus" column="registration_status"/>
+        <result property="registrationId" column="registration_id"/>
+    </resultMap>
+
+    <select id="findByPage" resultMap="examMap">
+        SELECT 
+            e.id,
+            e.name,
+            e.course_id,
+            e.paper_id,
+            e.start_time,
+            e.end_time,
+            e.created_at,
+            e.updated_at,
+            c.name as course_name,
+            p.title as paper_name,
+            c.id as course_id
+        FROM exam e
+        LEFT JOIN course c ON e.course_id = c.id
+        LEFT JOIN exam_paper p ON e.paper_id = p.id
+        ORDER BY e.created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM exam
+    </select>
+
+    <select id="findById" resultMap="examMap">
+        SELECT 
+            e.id,
+            e.name,
+            e.course_id,
+            e.paper_id,
+            e.start_time,
+            e.end_time,
+            e.created_at,
+            e.updated_at,
+            c.name as course_name,
+            p.title as paper_name,
+            c.id as course_id
+        FROM exam e
+        LEFT JOIN course c ON e.course_id = c.id
+        LEFT JOIN exam_paper p ON e.paper_id = p.id
+        WHERE e.id = #{id}
+    </select>
+
+    <select id="findByPaperId" resultMap="examMap">
+        SELECT * FROM exam WHERE paper_id = #{paperId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exam (name, course_id, start_time, end_time, paper_id, created_at, updated_at)
+        VALUES (#{name}, #{courseId}, #{startTime}, #{endTime}, #{paperId}, NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE exam e
+        SET e.name = #{name},
+            e.course_id = #{courseId},
+            e.start_time = #{startTime},
+            e.end_time = #{endTime},
+            e.paper_id = #{paperId},
+            e.updated_at = NOW()
+        WHERE e.id = #{id}
+    </update>
+
+    <!-- 添加新的查询方法用于获取更新后的考试信息 -->
+    <select id="getExamDetailById" resultType="com.management.exam.vo.ExamUpdateVO">
+        SELECT 
+            e.name as exam_name,
+            e.start_time,
+            e.end_time,
+            e.course_id,
+            c.name as course_name,
+            p.title as paper_title
+        FROM exam e
+        LEFT JOIN course c ON e.course_id = c.id
+        LEFT JOIN exam_paper p ON e.paper_id = p.id
+        WHERE e.id = #{id}
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM exam WHERE id = #{id}
+    </delete>
+
+    <select id="selectAvailableExams" resultMap="examMap">
+        SELECT 
+            e.id,
+            e.name,
+            e.course_id,
+            e.paper_id,
+            e.start_time,
+            e.end_time,
+            e.created_at,
+            e.updated_at,
+            p.title as paper_name,
+            c.name as course_name,
+            CASE WHEN er.id IS NOT NULL THEN er.status ELSE NULL END as registration_status,
+            er.id as registration_id
+        FROM exam e
+        LEFT JOIN exam_paper p ON e.paper_id = p.id
+        LEFT JOIN course c ON e.course_id = c.id
+        LEFT JOIN exam_registration er ON e.id = er.exam_id AND er.student_id = #{studentId}
+        WHERE e.start_time > #{now}
+        <if test="keyword != null and keyword != ''">
+            AND (e.name LIKE CONCAT('%', #{keyword}, '%')
+            OR c.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY e.start_time
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAvailableExams" resultType="int">
+        SELECT COUNT(*)
+        FROM exam e
+        LEFT JOIN course c ON e.course_id = c.id
+        WHERE e.start_time > #{now}
+        <if test="keyword != null and keyword != ''">
+            AND (e.name LIKE CONCAT('%', #{keyword}, '%')
+            OR c.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </select>
+
+    <!-- 统计学生考试记录总数 -->
+    <select id="countStudentExams" resultType="long">
+        SELECT COUNT(*)
+        FROM exam_registration er
+        JOIN exam e ON er.exam_id = e.id
+        LEFT JOIN students s ON er.student_id = s.id
+        WHERE er.status != 'CANCELLED'
+        <if test="studentId != null">
+            AND er.student_id = #{studentId}
+        </if>
+        <if test="query.startTime != null">
+            AND e.start_time >= #{query.startTime}
+        </if>
+        <if test="query.endTime != null">
+            AND e.end_time &lt;= #{query.endTime}
+        </if>
+        <if test="query.examName != null and query.examName != ''">
+            AND e.name LIKE CONCAT('%', #{query.examName}, '%')
+        </if>
+        <if test="query.studentName != null and query.studentName != ''">
+            AND s.name LIKE CONCAT('%', #{query.studentName}, '%')
+        </if>
+    </select>
+
+    <!-- 查询学生考试记录列表 -->
+    <select id="findStudentExams" resultType="com.management.exam.vo.ExamHistoryVO">
+        SELECT 
+            e.id as exam_id,
+            e.name as exam_name,
+            e.start_time,
+            e.end_time,
+            ep.title as paper_title,
+            er.exam_room_id as exam_room,
+            er2.name as exam_room_name,
+            er2.location as exam_room_location,
+            er.seat_number,
+            er.student_id,
+            s.name as student_name,
+            CASE 
+                WHEN NOW() &lt; e.start_time THEN '未开始'
+                WHEN NOW() BETWEEN e.start_time AND e.end_time THEN '进行中'
+                WHEN EXISTS (
+                    SELECT 1 FROM exam_answer ea 
+                    WHERE ea.exam_id = e.id AND ea.student_id = er.student_id
+                ) THEN '已完成'
+                ELSE '未参加'
+            END as status,
+            (SELECT SUM(score) FROM question WHERE paper_id = e.paper_id) as total_score,
+            COALESCE((SELECT SUM(score) FROM exam_answer WHERE exam_id = e.id AND student_id = er.student_id), 0) as student_score
+        FROM exam_registration er
+        JOIN exam e ON er.exam_id = e.id
+        JOIN exam_paper ep ON e.paper_id = ep.id
+        LEFT JOIN exam_room er2 ON er.exam_room_id = er2.id
+        LEFT JOIN students s ON er.student_id = s.id
+        WHERE er.status != 'CANCELLED'
+        <if test="studentId != null">
+            AND er.student_id = #{studentId}
+        </if>
+        <if test="query.startTime != null">
+            AND e.start_time &gt;= #{query.startTime}
+        </if>
+        <if test="query.endTime != null">
+            AND e.end_time &lt;= #{query.endTime}
+        </if>
+        <if test="query.examName != null and query.examName != ''">
+            AND e.name LIKE CONCAT('%', #{query.examName}, '%')
+        </if>
+        <if test="query.studentName != null and query.studentName != ''">
+            AND s.name LIKE CONCAT('%', #{query.studentName}, '%')
+        </if>
+        ORDER BY e.start_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- ExamAnswerDetailVO的结果映射 -->
+    <resultMap id="examAnswerDetailVOMap" type="com.management.exam.vo.ExamAnswerDetailVO">
+        <result property="questionId" column="question_id"/>
+        <result property="type" column="type"/>
+        <result property="title" column="title"/>
+        <result property="options" column="options"/>
+        <result property="questionScore" column="question_score"/>
+        <result property="answer" column="answer"/>
+        <result property="studentScore" column="student_score"/>
+        <result property="answerImages" column="answer_images" typeHandler="com.management.exam.handler.JsonListTypeHandler"/>
+        <result property="orderNum" column="order_num"/>
+    </resultMap>
+
+    <!-- 查询考试答题详情 -->
+    <select id="findExamAnswerDetail" resultMap="examAnswerDetailVOMap">
+        SELECT 
+            q.id as question_id,
+            q.type,
+            q.title,
+            q.options,
+            q.score as question_score,
+            q.order_num,
+            ea.answer,
+            ea.score as student_score,
+            ea.answer_images
+        FROM exam e
+        JOIN exam_paper ep ON e.paper_id = ep.id
+        JOIN question q ON ep.id = q.paper_id
+        LEFT JOIN exam_answer ea ON ea.question_id = q.id 
+            AND ea.exam_id = e.id 
+            AND ea.student_id = #{studentId}
+        WHERE e.id = #{examId}
+        ORDER BY q.order_num
+    </select>
+</mapper> 

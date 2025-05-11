@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.ExamAnswerMapper">
+    <resultMap id="answerMap" type="com.management.exam.entity.ExamAnswer">
+        <id property="id" column="id"/>
+        <result property="examId" column="exam_id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="questionId" column="question_id"/>
+        <result property="answer" column="answer"/>
+        <result property="score" column="score"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="batchInsert">
+        INSERT INTO exam_answer (
+            exam_id,
+            student_id,
+            question_id,
+            answer,
+            answer_images,
+            create_time,
+            update_time
+        )
+        VALUES
+        <foreach collection="answers" item="answer" separator=",">
+            (
+                #{answer.examId},
+                #{answer.studentId},
+                #{answer.questionId},
+                #{answer.answer},
+                #{answer.answerImages},
+                #{answer.createTime},
+                #{answer.updateTime}
+            )
+        </foreach>
+    </insert>
+
+    <select id="findByExamAndStudent" resultType="com.management.exam.entity.ExamAnswer">
+        SELECT * FROM exam_answer
+        WHERE exam_id = #{examId} AND student_id = #{studentId}
+    </select>
+</mapper> 

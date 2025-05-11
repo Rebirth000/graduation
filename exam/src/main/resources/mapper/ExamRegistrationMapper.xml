@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.ExamRegistrationMapper">
+    
+    <resultMap id="registrationMap" type="com.management.exam.entity.ExamRegistration">
+        <id property="id" column="id"/>
+        <result property="studentId" column="student_id"/>
+        <result property="examId" column="exam_id"/>
+        <result property="examRoomId" column="exam_room_id"/>
+        <result property="seatNumber" column="seat_number"/>
+        <result property="status" column="status"/>
+        <result property="registerTime" column="register_time"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="examName" column="exam_name"/>
+        <result property="examRoomName" column="exam_room_name"/>
+        <result property="examRoomLocation" column="exam_room_location"/>
+        <result property="examStartTime" column="start_time"/>
+        <result property="examEndTime" column="end_time"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.management.exam.entity.ExamRegistration" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exam_registration (
+            student_id, exam_id, status, register_time, created_at, updated_at
+        ) VALUES (
+            #{studentId}, #{examId}, #{status}, #{registerTime}, NOW(), NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.management.exam.entity.ExamRegistration">
+        UPDATE exam_registration
+        SET exam_room_id = #{examRoomId},
+            seat_number = #{seatNumber},
+            status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE exam_registration
+        SET status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="findByStudentId" resultMap="registrationMap">
+        SELECT r.*, e.name as exam_name, e.start_time, e.end_time,
+               er.name as exam_room_name
+        FROM exam_registration r
+        LEFT JOIN exam e ON r.exam_id = e.id
+        LEFT JOIN exam_room er ON r.exam_room_id = er.id
+        WHERE r.student_id = #{studentId}
+        ORDER BY r.register_time DESC
+    </select>
+
+    <select id="findByExamId" resultMap="registrationMap">
+        SELECT r.*, e.name as exam_name, e.start_time, e.end_time,
+               er.name as exam_room_name
+        FROM exam_registration r
+        LEFT JOIN exam e ON r.exam_id = e.id
+        LEFT JOIN exam_room er ON r.exam_room_id = er.id
+        WHERE r.exam_id = #{examId}
+        ORDER BY r.register_time
+    </select>
+
+    <select id="findByExamAndRoom" resultMap="registrationMap">
+        SELECT *
+        FROM exam_registration
+        WHERE exam_id = #{examId}
+        AND exam_room_id = #{examRoomId}
+        <if test="status != null">
+        AND status = #{status}
+        </if>
+        ORDER BY seat_number
+    </select>
+
+    <select id="findByStudentAndExam" resultMap="registrationMap">
+        SELECT r.*, e.name as exam_name, e.start_time, e.end_time,
+               er.name as exam_room_name
+        FROM exam_registration r
+        LEFT JOIN exam e ON r.exam_id = e.id
+        LEFT JOIN exam_room er ON r.exam_room_id = er.id
+        WHERE r.student_id = #{studentId}
+        AND r.exam_id = #{examId}
+    </select>
+
+    <select id="findById" resultMap="registrationMap">
+        SELECT r.*, e.name as exam_name, e.start_time, e.end_time,
+               er.name as exam_room_name
+        FROM exam_registration r
+        LEFT JOIN exam e ON r.exam_id = e.id
+        LEFT JOIN exam_room er ON r.exam_room_id = er.id
+        WHERE r.id = #{id}
+    </select>
+
+    <select id="findByStudentIdWithPaging" resultMap="registrationMap">
+        SELECT 
+            er.*,
+            e.name as exam_name,
+            e.start_time,
+            e.end_time,
+            er2.name as exam_room_name,
+            er2.location as exam_room_location
+        FROM exam_registration er
+        LEFT JOIN exam e ON er.exam_id = e.id
+        LEFT JOIN exam_room er2 ON er.exam_room_id = er2.id
+        WHERE er.student_id = #{studentId}
+        AND e.name IS NOT NULL
+        <if test="keyword != null and keyword != ''">
+            AND e.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY e.start_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByStudentId" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_registration er
+        LEFT JOIN exam e ON er.exam_id = e.id
+        WHERE er.student_id = #{studentId}
+        AND e.name IS NOT NULL
+        <if test="keyword != null and keyword != ''">
+            AND e.name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <delete id="deleteByExamId">
+        delete from exam_registration as er where er.exam_id = #{examId}
+    </delete>
+</mapper> 

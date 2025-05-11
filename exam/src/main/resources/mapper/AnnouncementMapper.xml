@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.AnnouncementMapper">
+    <select id="selectList" resultType="com.management.exam.entity.Announcement">
+        SELECT * FROM announcements
+        <where>
+            <if test="title != null and title != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*) FROM announcements
+        <where>
+            <if test="title != null and title != ''">
+                AND title LIKE CONCAT('%', #{title}, '%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="com.management.exam.entity.Announcement">
+        INSERT INTO announcements (
+            title,
+            content,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{title},
+            #{content},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.management.exam.entity.Announcement">
+        UPDATE announcements
+        SET 
+            title = #{title},
+            content = #{content},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM announcements WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultType="com.management.exam.entity.Announcement">
+        SELECT * FROM announcements WHERE id = #{id}
+    </select>
+</mapper> 

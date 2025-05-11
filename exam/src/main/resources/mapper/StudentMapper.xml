@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.StudentMapper">
+    <select id="selectList" resultType="com.management.exam.entity.Student">
+        SELECT * FROM students
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="studentId != null and studentId != ''">
+                AND student_id LIKE CONCAT('%', #{studentId}, '%')
+            </if>
+            <if test="className != null and className != ''">
+                AND class_name LIKE CONCAT('%', #{className}, '%')
+            </if>
+            <if test="phone != null and phone != ''">
+                AND phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND email LIKE CONCAT('%', #{email}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*) FROM students
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="studentId != null and studentId != ''">
+                AND student_id LIKE CONCAT('%', #{studentId}, '%')
+            </if>
+            <if test="className != null and className != ''">
+                AND class_name LIKE CONCAT('%', #{className}, '%')
+            </if>
+            <if test="phone != null and phone != ''">
+                AND phone LIKE CONCAT('%', #{phone}, '%')
+            </if>
+            <if test="email != null and email != ''">
+                AND email LIKE CONCAT('%', #{email}, '%')
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="com.management.exam.entity.Student">
+        INSERT INTO students (
+            name,
+            student_id,
+            password,
+            gender,
+            class_name,
+            phone,
+            email,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{name},
+            #{studentId},
+            #{password},
+            #{gender},
+            #{className},
+            #{phone},
+            #{email},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.management.exam.entity.Student">
+        UPDATE students
+        SET 
+            name = #{name},
+            student_id = #{studentId},
+            gender = #{gender},
+            class_name = #{className},
+            phone = #{phone},
+            email = #{email},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="resetPassword">
+        UPDATE students
+        SET 
+            password = #{password},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM students WHERE id = #{id}
+    </delete>
+
+    <select id="selectById" resultType="com.management.exam.entity.Student">
+        SELECT 
+            id,
+            name,
+            student_id,
+            gender,
+            class_name,
+            phone,
+            email,
+            created_at,
+            updated_at
+        FROM students
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByStudentId" resultType="com.management.exam.entity.Student">
+        SELECT 
+            id,
+            name,
+            student_id,
+            password,
+            gender,
+            class_name,
+            phone,
+            email,
+            created_at,
+            updated_at
+        FROM students
+        WHERE student_id = #{studentId}
+    </select>
+</mapper> 

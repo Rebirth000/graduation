@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.management.exam.mapper.ExamRoomExamMapper">
+    <resultMap id="examRoomExamMap" type="com.management.exam.entity.ExamRoomExam">
+        <id property="id" column="id"/>
+        <result property="examRoomId" column="exam_room_id"/>
+        <result property="examId" column="exam_id"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="examRoomExamVOMap" type="com.management.exam.vo.ExamRoomExamVO">
+        <id property="id" column="id"/>
+        <result property="examId" column="exam_id"/>
+        <result property="examRoomId" column="exam_room_id"/>
+        <result property="examName" column="exam_name"/>
+        <result property="examStartTime" column="exam_start_time"/>
+        <result property="examEndTime" column="exam_end_time"/>
+        <result property="roomName" column="room_name"/>
+        <result property="roomLocation" column="room_location"/>
+        <result property="roomCapacity" column="room_capacity"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByExamRoomId" resultMap="examRoomExamMap">
+        SELECT * FROM exam_room_exam WHERE exam_room_id = #{examRoomId}
+    </select>
+
+    <select id="findDetailsByExamRoomId" resultMap="examRoomExamVOMap">
+        SELECT 
+            ere.id,
+            ere.exam_id,
+            ere.exam_room_id,
+            e.name as exam_name,
+            e.start_time as exam_start_time,
+            e.end_time as exam_end_time,
+            er.name as room_name,
+            er.location as room_location,
+            er.capacity as room_capacity,
+            ere.created_at,
+            ere.updated_at
+        FROM exam_room_exam ere
+        LEFT JOIN exam e ON ere.exam_id = e.id
+        LEFT JOIN exam_room er ON ere.exam_room_id = er.id
+        WHERE ere.exam_room_id = #{examRoomId}
+        ORDER BY e.start_time DESC
+    </select>
+
+    <select id="findByExamId" resultMap="examRoomExamVOMap">
+        SELECT
+        ere.id,
+        ere.exam_id,
+        ere.exam_room_id,
+        e.name as exam_name,
+        e.start_time as exam_start_time,
+        e.end_time as exam_end_time,
+        er.name as room_name,
+        er.location as room_location,
+        er.capacity as room_capacity,
+        ere.created_at,
+        ere.updated_at
+        FROM exam_room_exam ere
+        LEFT JOIN exam e ON ere.exam_id = e.id
+        LEFT JOIN exam_room er ON ere.exam_room_id = er.id
+        WHERE ere.exam_id = #{examId}
+        ORDER BY e.start_time DESC
+    </select>
+
+    <select id="findById" resultMap="examRoomExamMap">
+        SELECT * FROM exam_room_exam WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exam_room_exam (exam_room_id, exam_id, created_at, updated_at)
+        VALUES (#{examRoomId}, #{examId}, NOW(), NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE exam_room_exam
+        SET exam_room_id = #{examRoomId},
+            exam_id = #{examId},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM exam_room_exam WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByExamRoomId">
+        DELETE FROM exam_room_exam WHERE exam_room_id = #{examRoomId}
+    </delete>
+
+    <delete id="deleteByExamId">
+        DELETE FROM exam_room_exam WHERE exam_id = #{examId}
+    </delete>
+
+    <select id="findExamRoomsByExamId" resultType="com.management.exam.entity.ExamRoom">
+        SELECT er.*
+        FROM exam_room er
+        INNER JOIN exam_room_exam ere ON er.id = ere.exam_room_id
+        WHERE ere.exam_id = #{examId}
+        ORDER BY er.id
+    </select>
+</mapper> 
