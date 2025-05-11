@@ -22,14 +22,22 @@
           <el-button type="primary" round>导入题目</el-button>
         </el-upload>
       </div>
-      <el-button @click="router.push('/exam/paper')" round>返回列表</el-button>
+      <div>
+        <el-button @click="router.push('/exam/paper')" round>返回列表</el-button>
+      </div>
     </div>
 
     <div v-loading="loading">
-      <div v-for="type in questionTypes" :key="type.value" class="question-section" v-if="getQuestionsByType(type.value).length > 0">
-        <h3>{{ type.label }}</h3>
-        <el-table :data="getQuestionsByType(type.value)" border style="width: 100%">
+      <!-- 全部题目 -->
+      <div class="question-section">
+        <h3>全部题目 ({{questions.length}})</h3>
+        <el-table :data="questions" border style="width: 100%">
           <el-table-column type="index" label="序号" width="80" />
+          <el-table-column prop="type" label="题型" width="120">
+            <template #default="{ row }">
+              {{ getQuestionTypeName(row.type) }}
+            </template>
+          </el-table-column>
           <el-table-column label="题目内容">
             <template #default="{ row }">
               <div v-if="['SINGLE_CHOICE', 'MULTIPLE_CHOICE'].includes(row.type)">
@@ -39,8 +47,23 @@
                 <div v-if="row.imageUrl" class="question-image">
                   <img :src="row.imageUrl" alt="题目图片" class="question-img" />
                 </div>
-                <div v-for="(option, index) in JSON.parse(row.options)" :key="index" class="option">
+                <div v-for="(option, index) in parseOptions(row.options)" :key="index" class="option">
                   {{ String.fromCharCode(65 + index) }}. <math-display :content="option" />
+                </div>
+              </div>
+              <div v-else-if="row.type === 'FILL_BLANK'">
+                <!-- 多空填空题 -->
+                <div v-if="parseFillBlankTitle(row.title).isMulti" 
+                     class="multi-blank-content" 
+                     v-html="renderMultiBlanks(parseFillBlankTitle(row.title).content)">
+                </div>
+                <!-- 单空填空题 -->
+                <div v-else>
+                  {{ parseFillBlankTitle(row.title).prefix }}<span class="blank-line">_</span>{{ parseFillBlankTitle(row.title).suffix }}
+                </div>
+                
+                <div v-if="row.imageUrl" class="question-image">
+                  <img :src="row.imageUrl" alt="题目图片" class="question-img" />
                 </div>
               </div>
               <div v-else>
@@ -60,6 +83,7 @@
           </el-table-column>
         </el-table>
       </div>
+
       <el-empty v-if="questions.length === 0" description="该试卷暂无题目，请点击添加题目按钮开始创建题目" />
     </div>
 
@@ -254,17 +278,23 @@ const rules = {
 const loadData = async () => {
   try {
     loading.value = true
-    const [paperResponse, questionsResponse] = await Promise.all([
-      getExamPaperById(route.params.id),
-      getQuestionList(route.params.id)
-    ])
+    console.log('加载试卷ID:', route.params.id)
     
+    // 获取试卷信息
+    const paperResponse = await getExamPaperById(route.params.id)
     if (paperResponse.code === 200) {
       examPaper.value = paperResponse.data
+      console.log('试卷信息:', examPaper.value)
     }
     
+    // 获取试卷题目列表
+    const questionsResponse = await getQuestionList(route.params.id)
     if (questionsResponse.code === 200) {
-      questions.value = questionsResponse.data
+      questions.value = questionsResponse.data || []
+      console.log('题目列表:', questions.value)
+    } else {
+      console.error('获取题目失败:', questionsResponse)
+      questions.value = []
     }
   } catch (error) {
     console.error('加载数据失败:', error)
@@ -275,7 +305,19 @@ const loadData = async () => {
 }
 
 const getQuestionsByType = (typeCode) => {
-  return questions.value.filter(q => q.type === typeCode) || []
+  try {
+    console.log(`查找题型 ${typeCode} 的题目，当前题目总数:`, questions.value.length)
+    if (!questions.value || !Array.isArray(questions.value)) {
+      console.warn('题目列表为空或不是数组')
+      return []
+    }
+    const result = questions.value.filter(q => q.type === typeCode) || []
+    console.log(`题型 ${typeCode} 的题目数量:`, result.length)
+    return result
+  } catch (error) {
+    console.error('获取题型题目异常:', error)
+    return []
+  }
 }
 
 const resetQuestionForm = () => {
@@ -490,68 +532,56 @@ const isMultiBlanks = (question) => {
   }
 }
 
-// 渲染多填空题的题干文本（将[blank]替换为填空标记）
-const renderMultiBlanks = (question) => {
+// 渲染多空填空题的题干文本（将[blank]替换为填空标记）
+const renderMultiBlanks = (content) => {
+  if (!content) return '';
   try {
-    const parsed = JSON.parse(question.title)
-    let content = parsed.content || ''
-    // 替换[blank]为填空样式，使用el-tag样式
-    let blankIndex = 1
-    return content.replace(/\[blank\]/g, () => {
-      return `<span class="el-tag el-tag--small blank-tag">填空处</span>`
-    })
+    // 替换[blank]为与单空填空题相同样式的横线
+    return content.replace(/\[blank\]/g, '<span style="display: inline-block; min-width: 80px; height: 20px; border-bottom: 1px solid #000; margin: 0 5px; position: relative; top: -4px; line-height: 5px; color: transparent;">_</span>');
   } catch (e) {
-    return '解析题目内容失败'
+    console.error('渲染多空填空内容失败:', e);
+    return content;
   }
 }
 
 // 获取可用的题型列表，直接使用后端返回的数据，并确保不为空
 const getAvailableTypes = computed(() => {
-  // 如果availableQuestionTypes为空，返回默认题型
-  if (!availableQuestionTypes.value || availableQuestionTypes.value.length === 0) {
+  console.log('availableQuestionTypes:', availableQuestionTypes.value)
+  // 确保返回一个有效的数组
+  if (!availableQuestionTypes.value || !Array.isArray(availableQuestionTypes.value) || availableQuestionTypes.value.length === 0) {
+    console.log('使用默认题型')
     return questionTypes.map((type, index) => ({
       id: index + 1,
       label: type.label,
       value: type.value
     }))
   }
+  console.log('使用后端题型')
   return availableQuestionTypes.value
 })
 
 const fetchQuestionTypes = async () => {
   try {
     questionTypeLoading.value = true
-    const { data } = await getPaperQuestionTypes(route.params.id)
-    console.log(data)
+    console.log('开始获取题型，试卷ID:', route.params.id)
+    const response = await getPaperQuestionTypes(route.params.id)
+    console.log('获取题型响应:', response)
     
-    if (data && data.length > 0) {
-      availableQuestionTypes.value = data.map(type => ({
-        id: type.id,
+    if (response.code === 200 && response.data && Array.isArray(response.data)) {
+      console.log('获取到题型数据:', response.data)
+      availableQuestionTypes.value = response.data.map(type => ({
+        id: type.questionTypeId,
         label: type.name,
         value: type.code
       }))
     } else {
-      // 如果没有获取到试卷可用题型，则使用所有系统题型作为备选
-      const { data: allTypes } = await getQuestionTypeList({ page: 1, size: 100 })
-      if (allTypes && allTypes.records && allTypes.records.length > 0) {
-        availableQuestionTypes.value = allTypes.records.map(type => ({
-          id: type.id,
-          label: type.name,
-          value: type.code
-        }))
-        
-        // 如果没有题型可用，提示用户
-        if (availableQuestionTypes.value.length === 0) {
-          ElMessage.warning('此试卷未设置可用题型，请先在试卷管理中设置可用题型')
-        }
-      } else {
-        // 最后的备选方案：使用预定义的题型
-        availableQuestionTypes.value = questionTypes.map((type, index) => ({
-          id: index + 1,
-          label: type.label,
-          value: type.value
-        }))
-      }
+      console.log('使用系统题型')
+      // 使用预定义的题型
+      availableQuestionTypes.value = questionTypes.map((type, index) => ({
+        id: index + 1,
+        label: type.label,
+        value: type.value
+      }))
     }
   } catch (error) {
     console.error('获取题型列表失败:', error)
@@ -565,6 +595,64 @@ const fetchQuestionTypes = async () => {
     }))
   } finally {
     questionTypeLoading.value = false
+  }
+}
+
+const parseOptions = (options) => {
+  try {
+    if (typeof options === 'string') {
+      return JSON.parse(options) || []
+    } else if (Array.isArray(options)) {
+      return options
+    } else {
+      console.warn('未知的选项格式:', options)
+      return []
+    }
+  } catch (error) {
+    console.error('解析选项失败:', error, '选项内容:', options)
+    return []
+  }
+}
+
+const getQuestionTypeName = (type) => {
+  const typeInfo = questionTypes.find(t => t.value === type)
+  return typeInfo ? typeInfo.label : '未知题型'
+}
+
+const parseFillBlankTitle = (title) => {
+  try {
+    if (typeof title === 'string') {
+      const parsed = JSON.parse(title)
+      // 判断多空填空题的标识
+      if (parsed.content && parsed.content.includes('[blank]')) {
+        return {
+          isMulti: true,
+          content: parsed.content,
+          prefix: '',
+          suffix: ''
+        }
+      }
+      return {
+        isMulti: false,
+        prefix: parsed.prefix || '',
+        suffix: parsed.suffix || '',
+        content: ''
+      }
+    }
+    return {
+      isMulti: false,
+      prefix: '',
+      suffix: '',
+      content: title || ''
+    }
+  } catch (error) {
+    console.error('解析填空题标题失败:', error, '标题内容:', title)
+    return {
+      isMulti: false,
+      prefix: '',
+      suffix: '',
+      content: title || ''
+    }
   }
 }
 
@@ -741,4 +829,27 @@ onMounted(async () => {
 .blank-config-item {
   margin-bottom: 15px;
 }
-</style> 
+
+.blank-line {
+  display: inline-block;
+  min-width: 80px;
+  max-width: 80px;
+  height: 20px;
+  border-bottom: 1px solid #000;
+  margin: 0 5px;
+  position: relative;
+  top: -4px;
+  line-height: 5px;
+  color: transparent;
+}
+
+.multi-blank-content {
+  line-height: 1.8;
+}
+
+.multi-blank-content :deep(.blank-line) {
+  min-width: 60px;
+  display: inline-block;
+  vertical-align: middle;
+}
+</style>

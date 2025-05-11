@@ -239,7 +239,7 @@ public class ExamPaperServiceImpl implements ExamPaperService {
     }
     
     @Override
-    public ExamPaperQuestionType validateQuestionType(Integer examPaperId, String questionTypeName) {
+    public ExamPaperQuestionType validateQuestionType(Integer examPaperId, String code) {
         ExamPaper examPaper = findById(examPaperId);
         if (examPaper == null) {
             return null;
@@ -254,7 +254,7 @@ public class ExamPaperServiceImpl implements ExamPaperService {
         // 查找匹配的题型
         for (ExamPaperQuestionType type : questionTypes) {
             QuestionType questionType = questionTypeMapper.findById(type.getQuestionTypeId()).orElse(null);
-            if (questionType != null && questionType.getName().equals(questionTypeName)) {
+            if (questionType != null && questionType.getCode().equals(code)) {
                 return type;
             }
         }

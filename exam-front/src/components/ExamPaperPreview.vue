@@ -113,14 +113,16 @@ const renderQuestionTitle = (question) => {
   if (question.type === 'FILL_BLANK') {
     try {
       const title = JSON.parse(question.title)
-      if (title.content) {
-        // 多空填空题
-        return renderLatex(title.content.replace(/\[blank\]/g, '____'))
+      // 检查是否为多空填空题
+      if (title.type === 'multi-blanks' && title.content) {
+        // 多空填空题 - 替换[blank]为横线，使用内联样式确保一致
+        return renderLatex(title.content.replace(/\[blank\]/g, '<span style="display: inline-block; min-width: 80px; height: 20px; border-bottom: 1px solid #000; margin: 0 5px; position: relative; top: -4px; line-height: 5px; color: transparent;">_</span>'))
       } else {
         // 单空填空题
-        return renderLatex((title.prefix || '') + '____' + (title.suffix || ''))
+        return renderLatex((title.prefix || '') + '<span class="blank-line">_</span>' + (title.suffix || ''))
       }
     } catch (e) {
+      console.error('解析填空题失败:', e)
       return renderLatex(question.title)
     }
   } else {
@@ -257,6 +259,7 @@ const parseOptions = (options) => {
 
 .question-images {
   margin-top: 16px;
+  text-align: center;
 }
 
 .question-image {
@@ -265,7 +268,8 @@ const parseOptions = (options) => {
 }
 
 .no-questions {
-  padding: 32px 0;
+  padding: 40px 0;
+  text-align: center;
 }
 
 /* 添加LaTeX公式样式 */
@@ -280,16 +284,25 @@ const parseOptions = (options) => {
 }
 
 /* 优化填空题的下划线样式 */
-.question-title:deep(.____ ) {
+.question-title:deep(.blank-line) {
   display: inline-block;
-  min-width: 60px;
-  border-bottom: 1px solid #606266;
-  text-align: center;
-  margin: 0 4px;
+  min-width: 80px;
+  height: 20px;
+  border-bottom: 1px solid #000;
+  margin: 0 5px;
+  position: relative;
+  top: -4px;
+  line-height: 5px;
+  color: transparent;
 }
 
 /* 数学公式块样式 */
 :deep(.MathJax) {
   outline: 0;
+}
+
+/* 移除旧的下划线样式 */
+:deep(._____) {
+  display: none;
 }
 </style> 
